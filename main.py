@@ -2,11 +2,44 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import csv
+from selenium import webdriver 
+from time import sleep 
+from random import randint
+
+def randomize_sleep(min, max):
+    sleep(randint(min*100, max*100) / 100)
 
 def web_scraper(province_territory):
-    if len(province_territory.split()) == 2: 
-        province_territory = province_territory.replace(' ', '-')
-    url = f'https://www.uschamber.com/co/chambers/{province_territory.lower()}'
+    PATH = '/home/daggerpov/Documents/GitHub/Church-Scraper/chromedriver'
+    driver = webdriver.Chrome(PATH)
+
+    driver.get("https://churchdirectory.ca/")
+    randomize_sleep(3, 4)
+
+    province_territory_select = driver.find_element_by_xpath(
+        '//select[@class="s-field float-right"]'
+    )
+    province_territory_select.click()
+    randomize_sleep(1, 2)
+    
+    province_territory_selections = driver.find_elements_by_css_selector(
+        "option"
+    )
+    randomize_sleep(1, 2)
+
+    select_province_territory = options.index(province_territory)
+    province_territory_selections[select_province_territory].click()
+    randomize_sleep(2, 3)
+
+    search_button = driver.find_element_by_xpath(
+        '//input[@id="goButton"]'
+    )
+    search_button.click()
+    randomize_sleep(1, 2)
+    
+    
+    
+    '''url = 
     
     header = {"From":"Daniel Agapov <danielagapov1@gmail.com>"}
 
@@ -15,39 +48,11 @@ def web_scraper(province_territory):
 
     soup = BeautifulSoup(response.text, "html5lib")
 
-    return soup.select(".chamber-finder__item")
+    return soup.select("")'''
 
-def retrieve_info(province_territory, lines, current_chamber, chamber_member_bool_info='', website_info='', phone_number_info='', address_info='', address2_info='', accredited_info=''):
-    for line in lines:
-        stars = 0
-        for star in current_chamber.find_all(class_="icon-star"):
-            stars += 1
-            accredited_info = f'{stars} / 5'
-        
-        if 'U.S. Chamber Member' in line:
-            chamber_member_bool_info = 'U.S. Chamber Member'
-                
-        if 'Website—' in line:
-            website_info = line.replace('Website—', '').replace(' ', '')
+def retrieve_info(province_territory):
+    pass
 
-        
-        if 'Phone Number—' in line:
-            phone_number_info = line.replace('Phone Number—', '').replace(' ', '')
-
-
-        if 'Address—' in line:
-            line_number = lines.index(line)
-            split_address = lines[line_number+2:line_number+4]
-            address_info = split_address[0].replace('  ', '')
-            address2_info = split_address[1].replace('  ', '')
-
-        
-    name_not_formatted = lines[2].split()
-    name_info = ''
-    for i in name_not_formatted:
-        name_info += i + ' '
-
-    return name_info, chamber_member_bool_info, website_info, phone_number_info, address_info, address2_info, accredited_info
 
 def csv_entry(province_territory): 
     chambers = web_scraper(province_territory)
@@ -72,21 +77,12 @@ global index ; index = 0
 #this first function may seem redundant, but I need it to pass in these variables for the 
 #province_territory so that the index resets for every province_territory entered. 
 
-def scrape(province_territory, city):
+def scrape(province_territory):
     global index ; index = 0
     
-    chambers = web_scraper(province_territory)
-    current_chamber = chambers[index]
-    lines = current_chamber.text.split('\n')
+    churches = web_scraper(province_territory)
+    current_church = churches[index]
     
-    name['text'], chamber_member_bool['text'], website['text'], \
-    phone_number['text'], address['text'], address2['text'], \
-    accredited_text = retrieve_info(province_territory, lines, current_chamber)
-    
-    if chamber_member_bool['text'] != '' and accredited_text != '':
-        chamber_member_bool['text'] += f'  |  {accredited_text}'
-    elif accredited_text != '':
-        chamber_member_bool['text'] = accredited_text
     
     csv_entry(province_territory)
 
@@ -160,36 +156,6 @@ class main_screen():
         #making the style of this window compatible with my custom entry class
         self.style = ttk.Style(self.master)
         self.style.configure("Placeholder.TEntry", foreground="#d5d5d5")
-        
-
-        #fitting the entry and button for weather
-        self.weather_frame = tk.Frame(self.master, bg="#99aab5", bd=5)
-        self.weather_frame.place(relx=0.5, rely=0.05, relwidth=0.75, relheight=0.1, anchor='n')
-        
-        #fitting the output
-        self.lower_frame = tk.Frame(self.master, highlightcolor="#99aab5", bd=10)
-        self.lower_frame.place(relx=0.5, rely=0.20, relwidth=0.75, relheight=0.7, anchor='n')
-
-
-
-        name = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        name.place(rely=0, relwidth=1, relheight=0.165)
-
-        chamber_member_bool = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        chamber_member_bool.place(rely=0.165, relwidth=1, relheight=0.165)
-
-        phone_number = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        phone_number.place(rely=0.33, relwidth=1, relheight=0.165)
-
-        website = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        website.place(rely=0.495, relwidth=1, relheight=0.165)
-
-        address = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        address.place(rely=0.66, relwidth=1, relheight=0.165)
-
-        address2 = tk.Label(self.lower_frame, bg="#99aab5", font=('Courier', 24))
-        address2.place(rely=0.825, relwidth=1, relheight=0.165)
-
 
         global options
 
@@ -218,7 +184,7 @@ class main_screen():
         self.province_territory_frame.place(relx=0.5, rely=0.2, relwidth=0.75, relheight=0.1, anchor='n')
 
         self.submit_frame = tk.Frame(self.master, bg="#7289da", bd=10)
-        self.submit_frame.place(relx=0.5, rely=0.85, relwidth=0.15, relheight=0.1, anchor='n')
+        self.submit_frame.place(relx=0.5, rely=0.85, relwidth=0.2, relheight=0.1, anchor='n')
         
 
         global province_territory_entry
@@ -231,36 +197,9 @@ class main_screen():
         #simple lambda that invokes the info_display function
         self.button = tk.Button(self.submit_frame, text="Web Scrape", font=('Courier', 24), bg='white', 
             command=lambda:scrape(str(province_territory_entry['text'])))
-        self.button.place(relx=0.7, relheight=1, relwidth=0.3)
+        self.button.place(relheight=1, relwidth=1)
 
 
-
-
-        #next and prev. buttons for chambers navigation
-        
-        
-'''        #making the picture into a label
-        self.previous_pic = tk.PhotoImage(file='./images/previous_pic.png')
-        self.previous_pic_label = tk.Label(self.master, image=self.previous_pic)
-        self.previous_pic_label.place(relwidth=0.1, relheight=0.17786, rely=0.45, relx=0.0125)
-
-        #putting a button at the same spot as the label, essentially making it into one.
-        self.previous_pic_button = tk.Button(self.master, image=self.previous_pic, 
-        command=lambda:decrease_index(self.entry.get(), name, website, phone_number, address, address2, chamber_member_bool))
-        self.previous_pic_button.place(relwidth=0.1, relheight=0.17786, rely=0.45, relx=0.0125)
-
-        
-
-        self.next_pic = tk.PhotoImage(file='./images/next_pic.png')
-        self.next_pic_label = tk.Label(self.master, image=self.next_pic)
-        self.next_pic_label.place(relwidth=0.1, relheight=0.17786, rely=0.45, relx=0.885) #1366/768 = 1.7786, so I set height to 
-                                                                                        #this so that it'd be proportional to width.
-
-        self.next_pic_button = tk.Button(self.master, image=self.next_pic, 
-        command=lambda:increase_index(self.entry.get(), name, website, phone_number, address, address2, chamber_member_bool))
-        self.next_pic_button.place(relwidth=0.1, relheight=0.17786, rely=0.45, relx=0.885) '''
-
-        
         
 
 if __name__ == '__main__':
