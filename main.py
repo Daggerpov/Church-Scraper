@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import csv
-from selenium import webdriver 
+#from selenium import webdriver 
 from time import sleep 
 from random import randint
 
@@ -10,7 +10,7 @@ def randomize_sleep(min, max):
     sleep(randint(min*100, max*100) / 100)
 
 def web_scraper(province_territory):
-    PATH = '/home/daggerpov/Documents/GitHub/Church-Scraper/chromedriver'
+    '''PATH = '/home/daggerpov/Documents/GitHub/Church-Scraper/chromedriver'
     driver = webdriver.Chrome(PATH)
 
     driver.get("https://churchdirectory.ca/")
@@ -37,9 +37,28 @@ def web_scraper(province_territory):
     search_button.click()
     randomize_sleep(1, 2)
     
+    churches = soup.select("fieldset")
     
-    
-    '''url = 
+
+    exit()'''
+
+    province_territory_dict = {
+        "Alberta": "AB",
+        "British Columbia": "BC",
+        "Manitoba": "MB",
+        "New Brunswick": "NB",
+        "Newfoundland": "NL",
+        "Northwest Territories": "NT",
+        "Nova Scotia": "NS",
+        "Nunavut": "NU",
+        "Ontario": "ON",
+        "Prince Edward Island": "PE",
+        "Québec": "QC",
+        "Saskatchewan": "SK",
+        "Yukon": "YT"
+    }
+
+    url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_dict[province_territory]}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
     
     header = {"From":"Daniel Agapov <danielagapov1@gmail.com>"}
 
@@ -48,43 +67,38 @@ def web_scraper(province_territory):
 
     soup = BeautifulSoup(response.text, "html5lib")
 
-    return soup.select("")'''
+    return soup.select("fieldset > p.address")
 
-def retrieve_info(province_territory):
-    pass
+def retrieve_info(church):
+    print(church.text)
+    
+    details_link = church.select('a')[0]['href']
+    
+    
+    
 
 
-def csv_entry(province_territory): 
-    chambers = web_scraper(province_territory)
+
+def csv_entry(province_territory, churches): 
+    churches = web_scraper(province_territory)
     
     #clears spreadsheet
-    with open(f"./chambers/{province_territory}.csv", "w", encoding="utf-8", newline="") as f:
+    with open(f"./churches/{province_territory}.csv", "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerows([])
 
-    for current_chamber in chambers:
-        table = []
-        lines = current_chamber.text.split('\n')
-        table.append(retrieve_info(province_territory, lines, current_chamber))
-
-        with open(f"./chambers/{province_territory}.csv", "a", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerows(table)
+    for church in churches: 
+        retrieve_info(church)
         
-
-global index ; index = 0
 
 #this first function may seem redundant, but I need it to pass in these variables for the 
 #province_territory so that the index resets for every province_territory entered. 
 
 def scrape(province_territory):
-    global index ; index = 0
     
     churches = web_scraper(province_territory)
-    current_church = churches[index]
-    
-    
-    csv_entry(province_territory)
+        
+    csv_entry(province_territory, churches)
 
 #everything past this point is just for the GUI and doesn't matter for the web scraper. 
 #------------------------------------------------------------------------------------------#
