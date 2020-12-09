@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import csv
-#from selenium import webdriver 
 from time import sleep 
 from random import randint
 
@@ -10,38 +9,6 @@ def randomize_sleep(min, max):
     sleep(randint(min*100, max*100) / 100)
 
 def web_scraper(province_territory):
-    '''PATH = '/home/daggerpov/Documents/GitHub/Church-Scraper/chromedriver'
-    driver = webdriver.Chrome(PATH)
-
-    driver.get("https://churchdirectory.ca/")
-    randomize_sleep(3, 4)
-
-    province_territory_select = driver.find_element_by_xpath(
-        '//select[@class="s-field float-right"]'
-    )
-    province_territory_select.click()
-    randomize_sleep(1, 2)
-    
-    province_territory_selections = driver.find_elements_by_css_selector(
-        "option"
-    )
-    randomize_sleep(1, 2)
-
-    select_province_territory = options.index(province_territory)
-    province_territory_selections[select_province_territory].click()
-    randomize_sleep(2, 3)
-
-    search_button = driver.find_element_by_xpath(
-        '//input[@id="goButton"]'
-    )
-    search_button.click()
-    randomize_sleep(1, 2)
-    
-    churches = soup.select("fieldset")
-    
-
-    exit()'''
-
     province_territory_dict = {
         "Alberta": "AB",
         "British Columbia": "BC",
@@ -60,22 +27,34 @@ def web_scraper(province_territory):
 
     url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_dict[province_territory]}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
     
-    header = {"From":"Daniel Agapov <danielagapov1@gmail.com>"}
+    header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
 
     response = requests.get(url, headers=header)
     if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
 
     soup = BeautifulSoup(response.text, "html5lib")
 
-    return soup.select("fieldset > p.address")
+    return soup.select("fieldset")
 
 def retrieve_info(church):
+    name = church.select("legend")[0].text.replace("Edit ", '')
+
+    
+
+
+    '''church = church.select("p.address")[0]
     print(church.text)
-    
+
     details_link = church.select('a')[0]['href']
+
+    header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
     
-    
-    
+    response = requests.get(details_link, headers=header)
+    if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
+
+    soup = BeautifulSoup(response.text, "html5lib")'''
+
+    return name, city, phone, email, website
 
 
 
