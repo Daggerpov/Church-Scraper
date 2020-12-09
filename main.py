@@ -25,7 +25,8 @@ def web_scraper(province_territory):
         "Yukon": "YT"
     }
 
-    url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_dict[province_territory]}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
+    global province_territory_code; province_territory_code = province_territory_dict[province_territory]
+    url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_code}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
     
     header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
 
@@ -39,11 +40,12 @@ def web_scraper(province_territory):
 def retrieve_info(church):
     name = church.select("legend")[0].text.replace("Edit ", '')
 
+    church = church.select("p.address")[0]
     
-
-
-    '''church = church.select("p.address")[0]
-    print(church.text)
+    city = ''
+    for line in church.text.split('\n'):
+        if ',' in line and province_territory_code in line:
+            city = line.split(',')[0]
 
     details_link = church.select('a')[0]['href']
 
@@ -52,9 +54,30 @@ def retrieve_info(church):
     response = requests.get(details_link, headers=header)
     if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
 
-    soup = BeautifulSoup(response.text, "html5lib")'''
+    soup = BeautifulSoup(response.text, "html5lib")
 
-    return name, city, phone, email, website
+    try:
+        phone = soup.select("span.tel")[0].text.replace("Tel: ", '')
+        
+    except:
+        phone = ''
+
+    email = ''
+    '''try:
+        email = soup.find("a", string="Email")['href']
+    except:
+        email = '''''
+
+    try:
+        website = soup.find("a", string="Official Website")['href']
+    except:
+        website = ''
+        
+    row = [name, city, province_territory_code, phone, email, website]
+
+    print(row)
+
+    return row
 
 
 
