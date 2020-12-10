@@ -4,38 +4,63 @@ import time
 import csv
 from time import sleep 
 from random import randint
+from selenium import webdriver 
+import requests
+
 
 def randomize_sleep(min, max):
     sleep(randint(min*100, max*100) / 100)
 
 def web_scraper(province_territory):
+    churches = []
+
     province_territory_dict = {
-        "Alberta": "AB",
-        "British Columbia": "BC",
-        "Manitoba": "MB",
-        "New Brunswick": "NB",
-        "Newfoundland": "NL",
-        "Northwest Territories": "NT",
-        "Nova Scotia": "NS",
-        "Nunavut": "NU",
-        "Ontario": "ON",
-        "Prince Edward Island": "PE",
-        "Québec": "QC",
-        "Saskatchewan": "SK",
-        "Yukon": "YT"
-    }
+            "Alberta": "AB",
+            "British Columbia": "BC",
+            "Manitoba": "MB",
+            "New Brunswick": "NB",
+            "Newfoundland": "NL",
+            "Northwest Territories": "NT",
+            "Nova Scotia": "NS",
+            "Nunavut": "NU",
+            "Ontario": "ON",
+            "Prince Edward Island": "PE",
+            "Québec": "QC",
+            "Saskatchewan": "SK",
+            "Yukon": "YT"
+        }
 
     global province_territory_code; province_territory_code = province_territory_dict[province_territory]
-    url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_code}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
+
+    PATH = "/home/daggerpov/Documents/GitHub/Wedding-Scraper/chromedriver"
+    driver = webdriver.Chrome(PATH)
     
-    header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
+    driver.get(f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_code}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60')
+    randomize_sleep(4, 5)
 
-    response = requests.get(url, headers=header)
-    if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
+    url = f'https://churchdirectory.ca/search/?s_city=Any+City&s_province={province_territory_code}&s_orgname=Any+Church+Name&goButton.x=55&goButton.y=60'
+    while True:
+        header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
 
-    soup = BeautifulSoup(response.text, "html5lib")
+        response = requests.get(url, headers=header)
+        if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
 
-    return soup.select("fieldset")
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        for church in soup.select("fieldset"):
+            churches.append(church)
+        
+        try:
+            next_page_button = driver.find_element_by_xpath("//a[contains(text(), 'Next page')]")
+            randomize_sleep(1, 2)
+            if next_page_button:
+                url = next_page_button.get_attribute('href')
+                next_page_button.click()
+                randomize_sleep(1, 2)
+        except:
+            break
+    driver.quit()
+    return churches
 
 def retrieve_info(church):
     name = church.select("legend")[0].text.replace("Edit ", '')
@@ -52,7 +77,6 @@ def retrieve_info(church):
     header = {"From": "Daniel Agapov <danielagapov1@gmail.com>"}
     
     response = requests.get(details_link, headers=header)
-    if response.status_code != 200: print("Failed to get HTML:", response.status_code, response.reason); exit()
 
     soup = BeautifulSoup(response.text, "html5lib")
 
@@ -62,8 +86,8 @@ def retrieve_info(church):
     except:
         phone = ''
 
-    email = ''
-    '''try:
+    '''email = ''
+    try:
         email = soup.find("a", string="Email")['href']
     except:
         email = '''''
@@ -73,9 +97,7 @@ def retrieve_info(church):
     except:
         website = ''
         
-    row = [name, city, province_territory_code, phone, email, website]
-
-    print(row)
+    row = [name, city, province_territory_code, phone, website]
 
     return row
 
@@ -90,8 +112,12 @@ def csv_entry(province_territory, churches):
         writer.writerows([])
 
     for church in churches: 
-        retrieve_info(church)
-        
+        table = []
+        table.append(retrieve_info(church))
+
+        with open(f"./churches/{province_territory}.csv", "a", encoding="utf-8", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerows(table)
 
 #this first function may seem redundant, but I need it to pass in these variables for the 
 #province_territory so that the index resets for every province_territory entered. 
@@ -101,6 +127,8 @@ def scrape(province_territory):
     churches = web_scraper(province_territory)
         
     csv_entry(province_territory, churches)
+
+    exit()
 
 #everything past this point is just for the GUI and doesn't matter for the web scraper. 
 #------------------------------------------------------------------------------------------#
