@@ -5,7 +5,6 @@ import csv
 from time import sleep 
 from random import randint
 from selenium import webdriver 
-import requests
 
 
 def randomize_sleep(min, max):
